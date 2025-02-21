@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2ecc71;
+            --secondary-color: #27ae60;
+            --accent-color: #e74c3c;
+            --card-color: #ffffff;
+            --bg-color: #f8f9fa;
+            --text-color: #2c3e50;
+            --border-radius: 15px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .nav-custom {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .feature-card {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: var(--transition);
+            overflow: hidden;
+            height: 100%;
+            border: none;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            border: none;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(46, 204, 113, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover {
+            background: rgba(46, 204, 113, 0.1);
+            border-color: var(--secondary-color);
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: 0.5s;
+        }
+
+        .upload-zone:hover::before {
+            transform: translateX(100%);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: scale(1.1);
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 10px;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .preview-container {
+            margin-top: 2rem;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .preview-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .preview-container:hover .preview-overlay {
+            opacity: 1;
+        }
+
+        #camera-feed, #preview-image, #captured-photo {
+            width: 100%;
+            max-height: 480px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .result-card {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card.success {
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .result-card.error {
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .confidence-level::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.2),
+                rgba(255,255,255,0.1)
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .camera-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .camera-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .camera-btn i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .disease-badge {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 500;
+            margin-top: 1rem;
+            display: inline-block;
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Sensor Dashboard Styles */
+        .sensor-dashboard {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sensor-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .sensor-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .temperature-icon { background: #ffebee; color: #f44336; }
+        .humidity-icon { background: #e3f2fd; color: #2196f3; }
+        .moisture-icon { background: #e8f5e9; color: #4caf50; }
+
+        .gauge-container {
+            background: #eee;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .gauge-fill.normal { background: #4caf50; }
+        .gauge-fill.warning { background: #ff9800; }
+        .gauge-fill.danger { background: #f44336; }
+
+        .alert-icon {
+            font-size: 20px;
+        }
+
+        #last-updated {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 1rem auto;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .upload-zone {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar nav-custom">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-leaf text-success me-2"></i>
+                Plant Disease Detection
+            </span>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Sensor Dashboard -->
+        <div class="sensor-dashboard">
+            <h3 class="mb-4">Environmental Monitoring</h3>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="sensor-card">
+                        <div class="d-flex align-items-center">
+                            <div class="sensor-icon temperature-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Temperature</h5>
+                                <div id="temperature-value" class="h4 mb-0">--°C</div>
+                            </div>
+                        </div>
+                        <div class="gauge-container">
+                            <div id="temperature-gauge" class="gauge-fill normal"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sensor-card">
+                        <div class="d-flex align-items-center">
+                            <div class="sensor-icon humidity-icon">
+                                <i class="fas fa-tint"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Humidity</h5>
+                                <div id="humidity-value" class="h4 mb-0">--%</div>
+                            </div>
+                        </div>
+                        <div class="gauge-container">
+                            <div id="humidity-gauge" class="gauge-fill normal"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sensor-card">
+                        <div class="d-flex align-items-center">
+                            <div class="sensor-icon moisture-icon">
+                                <i class="fas fa-water"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Soil Moisture</h5>
+                                <div id="soil-moisture-value" class="h4 mb-0">--%</div>
+                            </div>
+                        </div>
+                        <div class="gauge-container">
+                            <div id="soil-moisture-gauge" class="gauge-fill normal"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="last-updated" class="mt-2">Last updated: --</div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="alerts-container" class="mb-4"></div>
+
+        <div class="row g-4">
+            <!-- Upload Section -->
+            <div class="col-lg-6">
+                <div class="feature-card">
+                    <div class="card-header">
+                        <i class="fas fa-upload me-2"></i>Upload Photo
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="upload-zone">
+                            <input type="file" id="file-input" accept="image/*" class="d-none">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <h4>Drag & Drop or Click to Upload</h4>
+                            <p class="text-muted">Supported formats: JPG, PNG</p>
+                        </div>
+                        <div id="preview-container-upload" class="preview-container" style="display: none;">
+                            <img id="preview-image" src="" alt="Preview">
+                            <div class="preview-overlay">
+                                <button class="btn-custom" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-sync-alt me-2"></i>Change Photo
+                                </button>
+                            </div>
+                        </div>
+                        <div id="upload-result" class="result-card">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span id="upload-result-text">Processing...</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-level" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Section -->
+            <div class="col-lg-6">
+                <div class="feature-card">
+                    <div class="card-header">
+                        <i class="fas fa-camera me-2"></i>Live Detection
+                    </div>
+                    <div class="card-body">
+                        <div class="camera-controls">
+                            <button id="start-camera" class="camera-btn">
+                                <i class="fas fa-video"></i>
+                            </button>
+                            <button id="capture-photo" class="camera-btn" style="display: none;">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                            <button id="retake-photo" class="camera-btn" style="display: none;">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </div>
+                        <div class="preview-container">
+                            <video id="camera-feed" autoplay playsinline style="display: none;"></video>
+                            <canvas id="captured-photo" style="display: none;"></canvas>
+                            <div class="preview-overlay" id="camera-overlay">
+                                <div class="text-center text-white">
+                                    <i class="fas fa-camera fa-3x mb-3"></i>
+                                    <h5>Click Start Camera to begin</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="camera-result" class="result-card">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-spinner fa-spin me-2"></i>
+                                <span id="camera-result-text">Processing...</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-level" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="row mt-5 g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bolt feature-icon"></i>
+                        <h4>Real-time Detection</h4>
+                        <p class="text-muted">Get instant results with our advanced AI model</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-bar feature-icon"></i>
+                        <h4>High Accuracy</h4>
+                        <p class="text-muted">Precise disease detection with confidence scores</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-mobile-alt feature-icon"></i>
+                        <h4>Mobile Friendly</h4>
+                        <p class="text-muted">Use on any device with camera support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
